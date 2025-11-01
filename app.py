@@ -150,12 +150,22 @@ if uploaded_file:
     st.markdown(f"**Confidence:** {confidence.item() * 100:.2f}%")
 
     # ---- Grad-CAM ----
-    with st.spinner("🧩 Generating Grad-CAM..."):
-        cam = generate_gradcam(model, input_tensor, predicted_class.item())
-        img_np = np.array(image.resize((224, 224)))
-        heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
-        overlay = cv2.addWeighted(cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR), 0.6, heatmap, 0.4, 0)
-        st.image(cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB), caption="🔥 Tumor Focus", use_container_width=True)
+        # ---- Grad-CAM ----
+    if predicted_label.lower() == "notumor":
+        st.info("✅ No tumor detected — Grad-CAM visualization is not required for normal scans.")
+    else:
+        with st.spinner("🧩 Generating Grad-CAM visualization..."):
+            try:
+                cam = generate_gradcam(model, input_tensor, predicted_class.item())
+                img_np = np.array(image.resize((224, 224)))
+                heatmap = cv2.applyColorMap(np.uint8(255 * cam), cv2.COLORMAP_JET)
+                overlay = cv2.addWeighted(cv2.cvtColor(img_np, cv2.COLOR_RGB2BGR), 0.6, heatmap, 0.4, 0)
+                st.image(cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB),
+                         caption="🔥 Tumor Focus Region (Grad-CAM)",
+                         use_container_width=True)
+            except Exception as e:
+                st.error(f"⚠️ Grad-CAM generation error: {e}")
+
 
     st.markdown("#### 📊 Class Probabilities")
     for i, cls in enumerate(class_names):
@@ -248,6 +258,7 @@ st.markdown("""
 Developed by <b>Nabeel Siddiqui</b> | EfficientNet-B0 + Grad-CAM + Gemini AI + Streamlit  
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
