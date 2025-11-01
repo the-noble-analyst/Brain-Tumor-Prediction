@@ -1,4 +1,5 @@
-import streamlit as st 
+import streamlit as st
+import os
 import torch
 import torch.nn as nn
 from torchvision import models, transforms
@@ -15,8 +16,8 @@ st.set_page_config(page_title="🧠 Brain MRI Clinical Assistant", layout="wide"
 st.markdown("""
 <div style="text-align: center; padding: 20px; background: linear-gradient(90deg, #4facfe, #00f2fe);
 border-radius: 15px; color: white;">
-    <h1>🧠 Brain MRI AI Assistant</h1>
-    <h4>AI-powered MRI analysis with clinical conversation</h4>
+    <h1>🧠 Brain MRI AI Assistant for Doctors</h1>
+    <h4>AI-powered MRI analysis, Grad-CAM visualization, and Gemini AI conversation</h4>
 </div>
 """, unsafe_allow_html=True)
 
@@ -25,7 +26,7 @@ st.markdown("---")
 # ==============================
 # 2️⃣ Gemini API Setup
 # ==============================
-api_key = "AIzaSyDtB6nCn14CSkp2AX_aGQN1jv_gwFb_IC8"  
+api_key = st.secrets["GEMINI_API_KEY"]  # replace with your real key
 client = genai.Client(api_key=api_key)
 
 # ==============================
@@ -55,6 +56,7 @@ with st.sidebar:
 
     st.info("This information will help Gemini understand condition severity.")
 
+
 # ==============================
 # 4️⃣ Class Names + Model Load
 # ==============================
@@ -68,7 +70,7 @@ def load_model():
         nn.Dropout(p=0.4),
         nn.Linear(num_features, len(class_names))
     )
-    model_path = r"C:\Users\dell\Desktop\Brain Tumor\notebooks\model4.pth"
+    model_path = model_path = os.path.join("models", "model4.pth")
     try:
         state_dict = torch.load(model_path, map_location="cpu")
         model.load_state_dict(state_dict, strict=True)
@@ -246,3 +248,9 @@ st.markdown("""
 Developed by <b>Nabeel Siddiqui</b> | EfficientNet-B0 + Grad-CAM + Gemini AI + Streamlit  
 </div>
 """, unsafe_allow_html=True)
+
+
+
+
+
+
