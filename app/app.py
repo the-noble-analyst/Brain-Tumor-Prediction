@@ -70,7 +70,7 @@ def load_model():
         nn.Dropout(p=0.4),
         nn.Linear(num_features, len(class_names))
     )
-    model_path = os.path.join(os.path.dirname(__file__), "..", "models", "model4.pth")
+    model_path = model_path = os.path.join("models", "model4.pth")
     try:
         state_dict = torch.load(model_path, map_location="cpu")
         model.load_state_dict(state_dict, strict=True)
@@ -248,6 +248,7 @@ st.markdown("""
 Developed by <b>Nabeel Siddiqui</b> | EfficientNet-B0 + Grad-CAM + Gemini AI + Streamlit  
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
