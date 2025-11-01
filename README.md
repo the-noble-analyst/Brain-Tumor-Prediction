@@ -1,9 +1,3 @@
-This is an **excellent, professional-grade project**\! The integration of a trained CNN, Grad-CAM visualization, and a conversational Gemini AI assistant in a Streamlit app addresses real-world clinical needs.
-
-Here is the updated and finalized README file, incorporating the new details from your `app.py` and the provided `requirements.txt`.
-
------
-
 ## 🧠 Brain MRI AI Assistant for Doctors
 
 A sophisticated deep learning and generative AI application designed to assist clinicians. It integrates a Convolutional Neural Network (CNN) for multi-class brain tumor classification, **Grad-CAM** for model explainability, and the **Gemini API** for generating clinical summaries and managing patient-friendly conversations.
