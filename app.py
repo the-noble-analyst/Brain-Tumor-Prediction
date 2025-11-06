@@ -81,36 +81,82 @@ def clean_text(s):
     return s.strip()
 
 # ==============================
-# 3️⃣ Sidebar: Patient + Doctor Info
+# 3️⃣ Session State Initialization
+# ==============================
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+if "ai_summary" not in st.session_state:
+    st.session_state.ai_summary = None
+if "dr_name" not in st.session_state:
+    st.session_state.dr_name = ""
+if "hospital_name" not in st.session_state:
+    st.session_state.hospital_name = ""
+if "patient_name" not in st.session_state:
+    st.session_state.patient_name = ""
+if "patient_email" not in st.session_state:
+    st.session_state.patient_email = ""
+if "patient_address" not in st.session_state:
+    st.session_state.patient_address = ""
+
+# ==============================
+# 4️⃣ Authentication Sidebar
+# ==============================
+if not st.session_state.authenticated:
+    with st.sidebar:
+        st.image("https://tse3.mm.bing.net/th/id/OIP.mkNQTA9e60kIima-KVR7PgHaFv?rs=1&pid=ImgDetMain", width=80)
+        st.title("🔐 Doctor Authentication")
+        
+        with st.form("auth_form"):
+            doctor_id = st.text_input("Doctor ID *", placeholder="doctorxyz")
+            dr_name = st.text_input("Doctor Name *", placeholder="Dr. John Smith")
+            hospital = st.text_input("Hospital Name *", placeholder="City General Hospital")
+            patient = st.text_input("Patient Name *", placeholder="Jane Doe")
+            patient_email = st.text_input("Patient Email *", placeholder="patient@example.com")
+            patient_address = st.text_area("Patient Address *", placeholder="123 Main St, City, State, ZIP")
+            
+            submit_btn = st.form_submit_button("🔓 Authenticate & Continue", type="primary")
+            
+            if submit_btn:
+                if doctor_id == "doctorxyz" and dr_name and hospital and patient and patient_email and patient_address:
+                    st.session_state.authenticated = True
+                    st.session_state.dr_name = dr_name
+                    st.session_state.hospital_name = hospital
+                    st.session_state.patient_name = patient
+                    st.session_state.patient_email = patient_email
+                    st.session_state.patient_address = patient_address
+                    st.rerun()
+                else:
+                    st.error("❌ Please enter valid Doctor ID (doctorxyz) and fill all required fields.")
+        
+        st.info("💡 Use Doctor ID: **doctorxyz** to access the system")
+    
+    st.warning("👈 Please authenticate using the sidebar to access MRI analysis features.")
+    st.stop()
+
+# ==============================
+# 5️⃣ Authenticated View - Sidebar
 # ==============================
 with st.sidebar:
     st.image("https://tse3.mm.bing.net/th/id/OIP.mkNQTA9e60kIima-KVR7PgHaFv?rs=1&pid=ImgDetMain", width=80)
-    st.title("🧾 Patient Intake")
-
-    patient_name = st.text_input("Patient Name", value="John Doe")
-    doctor_choice = st.selectbox("Consulting Doctor", [
-        "Dr. Ahmed (Radiologist)",
-        "Dr. Sara (Neurosurgeon)",
-        "Dr. Malik (Oncologist)",
-        "Other"
-    ])
+    st.success("✅ Authenticated")
+    st.markdown("---")
+    st.subheader("📋 Session Details")
+    st.write(f"**Doctor:** {st.session_state.dr_name}")
+    st.write(f"**Hospital:** {st.session_state.hospital_name}")
+    st.write(f"**Patient:** {st.session_state.patient_name}")
+    st.write(f"**Email:** {st.session_state.patient_email}")
+    st.write(f"**Address:** {st.session_state.patient_address}")
     
-    hospital_name = st.text_input("Hospital Name", value="General Hospital")
-
-    symptoms = st.multiselect("Select Symptoms", [
-        "Persistent headache",
-        "Seizures",
-        "Vision problems",
-        "Balance difficulty",
-        "Nausea / vomiting",
-        "Memory issues",
-        "Weakness / numbness"
-    ])
-
-    st.info("This information will be included in the PDF report.")
+    st.markdown("---")
+    if st.button("🚪 Logout", type="secondary"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
 
 # ==============================
-# 4️⃣ Class Names + Model Load
+# 6️⃣ Class Names + Model Load
 # ==============================
 class_names = ['glioma', 'meningioma', 'notumor', 'pituitary']
 
@@ -138,7 +184,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 
 # ==============================
-# 5️⃣ Image Transformations
+# 7️⃣ Image Transformations
 # ==============================
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -148,7 +194,7 @@ transform = transforms.Compose([
 ])
 
 # ==============================
-# 6️⃣ Grad-CAM Helper
+# 8️⃣ Grad-CAM Helper
 # ==============================
 def generate_gradcam(model, input_tensor, target_class=None):
     gradients, activations = [], []
@@ -193,10 +239,11 @@ def generate_gradcam(model, input_tensor, target_class=None):
     return cam
 
 # ==============================
-# 7️⃣ PDF GENERATION (MULTI-PAGE)
+# 9️⃣ PDF GENERATION (MULTI-PAGE)
 # ==============================
-def generate_pdf_report(image, label, conf_pct, symptoms, dr_name, hospital_name, 
-                        patient_name, ai_summary, overlay, chat_history):
+def generate_pdf_report(image, label, conf_pct, dr_name, hospital_name, 
+                        patient_name, patient_email, patient_address, 
+                        ai_summary, overlay, chat_history):
     """Generate comprehensive multi-page PDF report"""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
@@ -219,7 +266,18 @@ def generate_pdf_report(image, label, conf_pct, symptoms, dr_name, hospital_name
     c.drawString(350, y, f"Hospital: {hospital_name}")
     y -= 18
     c.drawString(50, y, f"Patient: {patient_name}")
-    y -= 35
+    y -= 18
+    c.drawString(50, y, f"Email: {patient_email}")
+    y -= 18
+    
+    # Address with wrapping
+    c.drawString(50, y, "Address:")
+    y -= 14
+    address_lines = wrap(patient_address, width=70)
+    for addr_line in address_lines[:3]:  # Max 3 lines for address
+        c.drawString(70, y, addr_line)
+        y -= 14
+    y -= 10
     
     # Diagnosis section
     c.setFont("Helvetica-Bold", 14)
@@ -231,9 +289,6 @@ def generate_pdf_report(image, label, conf_pct, symptoms, dr_name, hospital_name
     c.drawString(50, y, f"Prediction: {label.title()}")
     y -= 18
     c.drawString(50, y, f"Confidence: {conf_pct:.2f}%")
-    y -= 18
-    symptoms_text = ', '.join(symptoms) if symptoms else 'N/A'
-    c.drawString(50, y, f"Symptoms: {symptoms_text}")
     y -= 35
     
     # AI Summary - COMPLETE
@@ -340,15 +395,7 @@ def generate_pdf_report(image, label, conf_pct, symptoms, dr_name, hospital_name
     return buffer
 
 # ==============================
-# 8️⃣ Session State Initialization
-# ==============================
-if "chat_history" not in st.session_state:
-    st.session_state.chat_history = []
-if "ai_summary" not in st.session_state:
-    st.session_state.ai_summary = None
-
-# ==============================
-# 9️⃣ Upload & Predict
+# 🔟 Upload & Predict
 # ==============================
 uploaded_file = st.file_uploader("📤 Upload Brain MRI Image", type=["jpg", "jpeg", "png"])
 
@@ -407,22 +454,20 @@ if uploaded_file:
         st.progress(float(probs[0][i].item()))
 
     # ==============================
-    # 🔟 AI Summary (Generated Once)
+    # 1️⃣1️⃣ AI Summary (Generated Once)
     # ==============================
     st.markdown("---")
     st.subheader("🤖 AI Clinical Summary")
 
     if st.session_state.ai_summary is None:
-        symptom_list = ", ".join(symptoms) if symptoms else "No symptoms provided"
-
         intro_prompt = f"""
 You are a medical AI assistant providing a clinical summary for doctors.
 
-Patient Name: {patient_name}
-Doctor: {doctor_choice}
+Patient Name: {st.session_state.patient_name}
+Doctor: {st.session_state.dr_name}
+Hospital: {st.session_state.hospital_name}
 Predicted Tumor Type: {predicted_label}
 Confidence: {conf_pct:.2f}%
-Symptoms Reported: {symptom_list}
 
 Provide a comprehensive clinical summary including:
 - Medical significance of this diagnosis
@@ -441,7 +486,7 @@ Use 3-4 well-structured paragraphs.
     st.write(st.session_state.ai_summary)
 
     # ==============================
-    # 1️⃣1️⃣ Continue Chat
+    # 1️⃣2️⃣ Continue Chat
     # ==============================
     st.markdown("---")
     st.subheader("💬 Doctor-AI Discussion")
@@ -461,9 +506,8 @@ Use 3-4 well-structured paragraphs.
         st.session_state.chat_history.append({"role": "user", "text": user_prompt})
         
         context = f"""
-Patient: {patient_name}
+Patient: {st.session_state.patient_name}
 Diagnosis: {predicted_label} with {conf_pct:.2f}% confidence
-Symptoms: {', '.join(symptoms) if symptoms else 'none reported'}
 
 Conversation history:
 """
@@ -483,7 +527,7 @@ Be concise, evidence-based, and clinically relevant.
         st.rerun()
 
     # ==============================
-    # 1️⃣2️⃣ PDF Generation
+    # 1️⃣3️⃣ PDF Generation
     # ==============================
     st.markdown("---")
     if st.button("📥 Generate Complete Clinical Report PDF", type="primary"):
@@ -491,11 +535,12 @@ Be concise, evidence-based, and clinically relevant.
             pdf_buffer = generate_pdf_report(
                 image, 
                 predicted_label, 
-                conf_pct, 
-                symptoms,
-                doctor_choice, 
-                hospital_name, 
-                patient_name,
+                conf_pct,
+                st.session_state.dr_name, 
+                st.session_state.hospital_name, 
+                st.session_state.patient_name,
+                st.session_state.patient_email,
+                st.session_state.patient_address,
                 st.session_state.ai_summary or "No AI summary available",
                 overlay,
                 st.session_state.chat_history
@@ -504,7 +549,7 @@ Be concise, evidence-based, and clinically relevant.
             st.download_button(
                 label="📄 Download Complete Report",
                 data=pdf_buffer,
-                file_name=f"brain_mri_report_{patient_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                file_name=f"brain_mri_report_{st.session_state.patient_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                 mime="application/pdf",
                 type="primary"
             )
@@ -514,7 +559,7 @@ else:
     st.info("📎 Upload a Brain MRI image to start analysis.")
 
 # ==============================
-# 1️⃣3️⃣ Footer
+# 1️⃣4️⃣ Footer
 # ==============================
 st.markdown("---")
 st.markdown("""
