@@ -18,6 +18,8 @@ from reportlab.pdfgen import canvas
 from textwrap import wrap
 import re
 import unicodedata
+from datetime import datetime
+from zoneinfo import ZoneInfo # available from Python 3.9+
 
 # Optional Gemini Import
 try:
@@ -109,12 +111,12 @@ if not st.session_state.authenticated:
         st.title("🔐 Doctor Authentication")
         
         with st.form("auth_form"):
-            doctor_id = st.text_input("Doctor ID *", placeholder="doctorxyz")
-            dr_name = st.text_input("Doctor Name *", placeholder="Dr. John Smith")
+            doctor_id = st.text_input("Doctor ID *", placeholder="Enter doctor's id")
+            dr_name = st.text_input("Doctor Name *", placeholder="Dr. Name")
             hospital = st.text_input("Hospital Name *", placeholder="City General Hospital")
-            patient = st.text_input("Patient Name *", placeholder="Jane Doe")
+            patient = st.text_input("Patient Name *", placeholder="Patient Name")
             patient_email = st.text_input("Patient Email *", placeholder="patient@example.com")
-            patient_address = st.text_area("Patient Address *", placeholder="123 Main St, City, State, ZIP")
+            patient_address = st.text_area("Patient Address *", placeholder="Enter patient address")
             
             submit_btn = st.form_submit_button("🔓 Authenticate & Continue", type="primary")
             
@@ -128,9 +130,9 @@ if not st.session_state.authenticated:
                     st.session_state.patient_address = patient_address
                     st.rerun()
                 else:
-                    st.error("❌ Please enter valid Doctor ID (doctorxyz) and fill all required fields.")
+                    st.error("❌ Please enter valid Doctor ID and fill all required fields.")
         
-        st.info("💡 Use Doctor ID: **doctorxyz** to access the system")
+        st.info("💡 Use a valid Doctor ID")
     
     st.warning("👈 Please authenticate using the sidebar to access MRI analysis features.")
     st.stop()
@@ -260,7 +262,9 @@ def generate_pdf_report(image, label, conf_pct, dr_name, hospital_name,
     c.setFillColorRGB(0, 0, 0)
     c.setFont("Helvetica", 11)
     y = height - 110
-    c.drawString(50, y, f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    # c.drawString(50, y, f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    datetime_india = datetime.now(tz=ZoneInfo('Asia/Kolkata'))
+    formatted_time = datetime_india.strftime('%Y-%m-%d %H:%M')
     y -= 18
     c.drawString(50, y, f"Doctor: {dr_name}")
     c.drawString(350, y, f"Hospital: {hospital_name}")
@@ -569,3 +573,4 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
