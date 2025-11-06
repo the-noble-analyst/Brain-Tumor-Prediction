@@ -262,9 +262,9 @@ def generate_pdf_report(image, label, conf_pct, dr_name, hospital_name,
     c.setFillColorRGB(0, 0, 0)
     c.setFont("Helvetica", 11)
     y = height - 110
-    # c.drawString(50, y, f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     datetime_india = datetime.now(tz=ZoneInfo('Asia/Kolkata'))
     formatted_time = datetime_india.strftime('%Y-%m-%d %H:%M')
+    c.drawString(50, y, f"Date: {formatted_time}")
     y -= 18
     c.drawString(50, y, f"Doctor: {dr_name}")
     c.drawString(350, y, f"Hospital: {hospital_name}")
@@ -573,4 +573,5 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
 
