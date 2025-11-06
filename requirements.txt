@@ -22,6 +22,11 @@ torchaudio==2.9.0
 google-genai==1.2.0
 
 # ===========================
+# PDF Generation (ReportLab)
+# ===========================
+reportlab==4.2.5
+
+# ===========================
 # Optional Utilities
 # ===========================
 jinja2==3.1.6
