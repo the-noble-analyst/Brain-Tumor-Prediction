@@ -111,7 +111,7 @@ if not st.session_state.authenticated:
         st.title("🔐 Doctor Authentication")
         
         with st.form("auth_form"):
-            doctor_id = st.text_input("Doctor ID *", placeholder="Enter doctor's id")
+            doctor_id = st.text_input("Doctor ID *", placeholder="Enter doctor's id for authentication (use doctorxyz)")
             dr_name = st.text_input("Doctor Name *", placeholder="Dr. Name")
             hospital = st.text_input("Hospital Name *", placeholder="City General Hospital")
             patient = st.text_input("Patient Name *", placeholder="Patient Name")
@@ -573,5 +573,6 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
 
 
