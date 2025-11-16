@@ -119,6 +119,17 @@ if not st.session_state.authenticated:
             doctor_id = st.text_input("Doctor ID *", placeholder="(use doctorxyz)")
             dr_name = st.text_input("Doctor Name *", placeholder="Dr. Name")
             hospital = st.text_input("Hospital Name *", placeholder="City General Hospital")
+            # show symptoms early (place before auth check)
+            st.sidebar.markdown("#### 🩺 Reported Symptoms")
+            common_symptoms = ["Headache","Seizures","Nausea/Vomiting","Weakness/Paralysis",
+                               "Vision changes","Speech difficulty","Balance/coordination issues",
+                               "Memory loss","Personality change","Dizziness"]
+            selected = st.sidebar.multiselect("Select symptoms (choose multiple)", common_symptoms, key="symp_selected")
+            other_symptoms = st.sidebar.text_area("Other symptoms (one per line)", key="symp_other")
+            # combine
+            symptoms_list = selected + [s.strip() for s in st.session_state.symp_other.splitlines() if s.strip()]
+            st.session_state.patient_symptoms = "; ".join(symptoms_list) if symptoms_list else "Not provided"
+
             patient = st.text_input("Patient Name *", placeholder="Patient Name")
             patient_email = st.text_input("Patient Email *", placeholder="patient@example.com")
             patient_address = st.text_area("Patient Address *", placeholder="Enter patient address")
@@ -605,3 +616,4 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
