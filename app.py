@@ -1,6 +1,7 @@
 # =============================================
 # Brain MRI Clinical Assistant v3
 # GitHub Version with Complete PDF Export
+# Added: multi-select + free-text symptoms, Gemini personalization, PDF symptoms
 # =============================================
 import streamlit as st
 import os
@@ -62,6 +63,7 @@ else:
     client = None
     st.warning("⚠️ Gemini SDK not available. Install with: pip install google-genai")
 
+
 def generate_gemini_text(prompt):
     """Generate text using Gemini API"""
     if client is None:
@@ -72,6 +74,7 @@ def generate_gemini_text(prompt):
     except Exception as e:
         text = f"Gemini Error: {e}"
     return clean_text(text)
+
 
 def clean_text(s):
     """Clean and normalize text"""
@@ -103,7 +106,6 @@ if "patient_address" not in st.session_state:
     st.session_state.patient_address = ""
 if "patient_symptoms" not in st.session_state:
     st.session_state.patient_symptoms = ""
-
 
 # ==============================
 # 4️⃣ Authentication Sidebar
@@ -263,7 +265,7 @@ def generate_gradcam(model, input_tensor, target_class=None):
 # ==============================
 def generate_pdf_report(image, label, conf_pct, dr_name, hospital_name, 
                         patient_name, patient_email, patient_address, 
-                        ai_summary, overlay, chat_history):
+                        ai_summary, overlay, chat_history, patient_symptoms):
     """Generate comprehensive multi-page PDF report"""
     buffer = io.BytesIO()
     c = canvas.Canvas(buffer, pagesize=A4)
@@ -299,7 +301,11 @@ def generate_pdf_report(image, label, conf_pct, dr_name, hospital_name,
     for addr_line in address_lines[:3]:  # Max 3 lines for address
         c.drawString(70, y, addr_line)
         y -= 14
-    y -= 10
+    y -= 8
+
+    # Reported symptoms
+    c.drawString(50, y, f"Reported Symptoms: {patient_symptoms}")
+    y -= 20
     
     # Diagnosis section
     c.setFont("Helvetica-Bold", 14)
@@ -475,6 +481,11 @@ if uploaded_file:
         st.write(f"{cls.title()}: {probs[0][i].item() * 100:.2f}%")
         st.progress(float(probs[0][i].item()))
 
+    # Show recorded symptoms in main view
+    st.markdown("---")
+    st.markdown("#### 🩺 Reported Symptoms")
+    st.write(st.session_state.patient_symptoms if st.session_state.patient_symptoms else "Not provided")
+
     # ==============================
     # 1️⃣1️⃣ AI Summary (Generated Once)
     # ==============================
@@ -490,6 +501,7 @@ Doctor: {st.session_state.dr_name}
 Hospital: {st.session_state.hospital_name}
 Predicted Tumor Type: {predicted_label}
 Confidence: {conf_pct:.2f}%
+Reported Symptoms: {st.session_state.patient_symptoms}
 
 Provide a comprehensive clinical summary including:
 - Medical significance of this diagnosis
@@ -530,6 +542,7 @@ Use 3-4 well-structured paragraphs.
         context = f"""
 Patient: {st.session_state.patient_name}
 Diagnosis: {predicted_label} with {conf_pct:.2f}% confidence
+Reported Symptoms: {st.session_state.patient_symptoms}
 
 Conversation history:
 """
@@ -565,7 +578,8 @@ Be concise, evidence-based, and clinically relevant.
                 st.session_state.patient_address,
                 st.session_state.ai_summary or "No AI summary available",
                 overlay,
-                st.session_state.chat_history
+                st.session_state.chat_history,
+                st.session_state.patient_symptoms
             )
             
             st.download_button(
@@ -591,8 +605,3 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
-
-
-
-
-
