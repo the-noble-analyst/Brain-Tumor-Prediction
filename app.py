@@ -101,6 +101,9 @@ if "patient_email" not in st.session_state:
     st.session_state.patient_email = ""
 if "patient_address" not in st.session_state:
     st.session_state.patient_address = ""
+if "patient_symptoms" not in st.session_state:
+    st.session_state.patient_symptoms = ""
+
 
 # ==============================
 # 4️⃣ Authentication Sidebar
@@ -147,9 +150,24 @@ with st.sidebar:
     st.subheader("📋 Session Details")
     st.write(f"**Doctor:** {st.session_state.dr_name}")
     st.write(f"**Hospital:** {st.session_state.hospital_name}")
+    st.markdown("#### 🩺 Reported Symptoms")
+    common_symptoms = [
+        "Headache", "Seizures", "Nausea/Vomiting", "Weakness/Paralysis",
+        "Vision changes", "Speech difficulty", "Balance/coordination issues",
+        "Memory loss", "Personality change", "Dizziness"
+    ]
+    selected = st.multiselect("Select symptoms (choose multiple)", common_symptoms)
+    other_symptoms = st.text_area("Other symptoms (type one per line)", placeholder="Describe any other symptoms here")
+    
+    # Combine and store
+    symptoms_list = selected + [s.strip() for s in other_symptoms.splitlines() if s.strip()]
+    symptoms_text = "; ".join(symptoms_list) if symptoms_list else "Not provided"
+    st.session_state.patient_symptoms = symptoms_text
+    
     st.write(f"**Patient:** {st.session_state.patient_name}")
     st.write(f"**Email:** {st.session_state.patient_email}")
     st.write(f"**Address:** {st.session_state.patient_address}")
+    
     
     st.markdown("---")
     if st.button("🚪 Logout", type="secondary"):
@@ -573,6 +591,7 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
 
 
 
