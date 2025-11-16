@@ -82,8 +82,11 @@ def clean_text(s):
     if not s:
         return ""
     s = unicodedata.normalize("NFKC", s)
-    s = re.sub(r"[ \t]{2,}", " ", s)
-    s = re.sub(r"\n{3,}", "\n\n", s)
+    s = re.sub(r"[ 	]{2,}", " ", s)
+    s = re.sub(r"
+{3,}", "
+
+", s)
     return s.strip()
 
 # ==============================
@@ -110,30 +113,12 @@ if "patient_symptoms" not in st.session_state:
     st.session_state.patient_symptoms = ""
 
 # ==============================
-# 4️⃣ Authentication Sidebar (symptoms before auth)
-# ==============================
+# 4️⃣ Authentication Sidebar (symptoms placed after details, before authenticate button)
 with st.sidebar:
     st.image("https://tse3.mm.bing.net/th/id/OIP.mkNQTA9e60kIima-KVR7PgHaFv?rs=1&pid=ImgDetMain", width=80)
-    st.markdown("#### 🩺 Reported Symptoms (enter before authenticate)")
-
-    # symptoms widgets always shown here when user is not yet authenticated
-    common_symptoms = [
-        "Headache","Seizures","Nausea/Vomiting","Weakness/Paralysis",
-        "Vision changes","Speech difficulty","Balance/coordination issues",
-        "Memory loss","Personality change","Dizziness"
-    ]
-
-    # use explicit keys to persist across reruns
-    selected = st.multiselect("Select symptoms (choose multiple)", common_symptoms, key="symp_selected")
-    other_symptoms = st.text_area("Other symptoms (one per line)", key="symp_other")
-
-    # combine and save once (keeps value even after rerun)
-    symptoms_list = selected + [s.strip() for s in other_symptoms.splitlines() if s.strip()]
-    st.session_state.patient_symptoms = "; ".join(symptoms_list) if symptoms_list else ""
-
-    st.markdown("---")
     st.title("🔐 Doctor Authentication")
-    # auth form below symptoms
+
+    # Auth form start
     with st.form("auth_form"):
         doctor_id = st.text_input("Doctor ID *", placeholder="(use doctorxyz)")
         dr_name = st.text_input("Doctor Name *", placeholder="Dr. Name")
@@ -141,6 +126,20 @@ with st.sidebar:
         patient = st.text_input("Patient Name *", placeholder="Patient Name")
         patient_email = st.text_input("Patient Email *", placeholder="patient@example.com")
         patient_address = st.text_area("Patient Address *", placeholder="Enter patient address")
+
+        # Symptoms section AFTER other details, but BEFORE authenticate button
+        st.markdown("#### 🩺 Reported Symptoms")
+        common_symptoms = [
+            "Headache","Seizures","Nausea/Vomiting","Weakness/Paralysis",
+            "Vision changes","Speech difficulty","Balance/coordination issues",
+            "Memory loss","Personality change","Dizziness"
+        ]
+        selected = st.multiselect("Select symptoms (choose multiple)", common_symptoms, key="symp_selected")
+        other_symptoms = st.text_area("Other symptoms (one per line)", key="symp_other")
+
+        symptoms_list = selected + [s.strip() for s in other_symptoms.splitlines() if s.strip()]
+        st.session_state.patient_symptoms = "; ".join(symptoms_list) if symptoms_list else ""
+
         submit_btn = st.form_submit_button("🔓 Authenticate & Continue", type="primary")
 
         if submit_btn:
@@ -151,14 +150,13 @@ with st.sidebar:
                 st.session_state.patient_name = patient
                 st.session_state.patient_email = patient_email
                 st.session_state.patient_address = patient_address
-                # keep patient_symptoms as already set by widgets above
                 st.rerun()
             else:
                 st.error("❌ Please enter valid Doctor ID and fill all required fields.")
 
-    st.info("💡 Fill symptoms first, then authenticate")
-
 if not st.session_state.authenticated:
+    st.warning("👈 Please authenticate using the sidebar to access MRI analysis features.")
+    st.stop();
     st.warning("👈 Please authenticate using the sidebar to access MRI analysis features.")
     st.stop()
 
@@ -335,7 +333,8 @@ def generate_pdf_report(image, label, conf_pct, dr_name, hospital_name,
     y -= 24
     c.setFillColorRGB(0, 0, 0)
     
-    summary_paragraphs = [p.strip() for p in ai_summary.split('\n') if p.strip()]
+    summary_paragraphs = [p.strip() for p in ai_summary.split('
+') if p.strip()]
     
     for paragraph in summary_paragraphs:
         if y < 80:
@@ -555,7 +554,8 @@ Reported Symptoms: {st.session_state.patient_symptoms}
 
 Conversation history:
 """
-        context += "\n".join([f"{m['role']}: {m['text']}" for m in st.session_state.chat_history[-6:]])
+        context += "
+".join([f"{m['role']}: {m['text']}" for m in st.session_state.chat_history[-6:]])
 
         follow_prompt = f"""
 {context}
