@@ -78,16 +78,18 @@ def generate_gemini_text(prompt):
 
 
 def clean_text(s):
-    """Clean and normalize text"""
     if not s:
         return ""
     s = unicodedata.normalize("NFKC", s)
-    s = re.sub(r"[ 	]{2,}", " ", s)
-    s = re.sub(r"
-{3,}", "
 
-", s)
+    # remove double spaces and tabs
+    s = re.sub(r"[ \t]{2,}", " ", s)
+
+    # limit huge empty lines to max two newlines
+    s = re.sub(r"\n{3,}", "\n\n", s)
+
     return s.strip()
+
 
 # ==============================
 # 3️⃣ Session State Initialization
@@ -614,3 +616,4 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
