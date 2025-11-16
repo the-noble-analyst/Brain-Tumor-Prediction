@@ -555,11 +555,9 @@ Reported Symptoms: {st.session_state.patient_symptoms}
 
 Conversation history:
 """
-        context += "
-".join([f"{m['role']}: {m['text']}" for m in st.session_state.chat_history[-6:]])
+        context += "".join([f"{m['role']}: {m['text']}" for m in st.session_state.chat_history[-6:]])
 
-        follow_prompt = f"""
-{context}
+        follow_prompt = f"""{context}
 
 Provide a professional medical response to the doctor's question.
 Be concise, evidence-based, and clinically relevant.
@@ -615,5 +613,6 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
 
 
