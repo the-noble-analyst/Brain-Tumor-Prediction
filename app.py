@@ -2,6 +2,7 @@
 # Brain MRI Clinical Assistant v3
 # GitHub Version with Complete PDF Export
 # Added: multi-select + free-text symptoms, Gemini personalization, PDF symptoms
+# Symptoms input now appears before authentication and persists across reruns
 # =============================================
 import streamlit as st
 import os
@@ -104,52 +105,60 @@ if "patient_email" not in st.session_state:
     st.session_state.patient_email = ""
 if "patient_address" not in st.session_state:
     st.session_state.patient_address = ""
+# patient_symptoms will be set by widgets (persist with keys)
 if "patient_symptoms" not in st.session_state:
     st.session_state.patient_symptoms = ""
 
 # ==============================
-# 4️⃣ Authentication Sidebar
+# 4️⃣ Authentication Sidebar (symptoms before auth)
 # ==============================
-if not st.session_state.authenticated:
-    with st.sidebar:
-        st.image("https://tse3.mm.bing.net/th/id/OIP.mkNQTA9e60kIima-KVR7PgHaFv?rs=1&pid=ImgDetMain", width=80)
-        st.title("🔐 Doctor Authentication")
-        
-        with st.form("auth_form"):
-            doctor_id = st.text_input("Doctor ID *", placeholder="(use doctorxyz)")
-            dr_name = st.text_input("Doctor Name *", placeholder="Dr. Name")
-            hospital = st.text_input("Hospital Name *", placeholder="City General Hospital")
-            # show symptoms early (place before auth check)
-            st.sidebar.markdown("#### 🩺 Reported Symptoms")
-            common_symptoms = ["Headache","Seizures","Nausea/Vomiting","Weakness/Paralysis",
-                               "Vision changes","Speech difficulty","Balance/coordination issues",
-                               "Memory loss","Personality change","Dizziness"]
-            selected = st.sidebar.multiselect("Select symptoms (choose multiple)", common_symptoms, key="symp_selected")
-            other_symptoms = st.sidebar.text_area("Other symptoms (one per line)", key="symp_other")
-            # combine
-            symptoms_list = selected + [s.strip() for s in st.session_state.symp_other.splitlines() if s.strip()]
-            st.session_state.patient_symptoms = "; ".join(symptoms_list) if symptoms_list else "Not provided"
+with st.sidebar:
+    st.image("https://tse3.mm.bing.net/th/id/OIP.mkNQTA9e60kIima-KVR7PgHaFv?rs=1&pid=ImgDetMain", width=80)
+    st.markdown("#### 🩺 Reported Symptoms (enter before authenticate)")
 
-            patient = st.text_input("Patient Name *", placeholder="Patient Name")
-            patient_email = st.text_input("Patient Email *", placeholder="patient@example.com")
-            patient_address = st.text_area("Patient Address *", placeholder="Enter patient address")
-            
-            submit_btn = st.form_submit_button("🔓 Authenticate & Continue", type="primary")
-            
-            if submit_btn:
-                if doctor_id == "doctorxyz" and dr_name and hospital and patient and patient_email and patient_address:
-                    st.session_state.authenticated = True
-                    st.session_state.dr_name = dr_name
-                    st.session_state.hospital_name = hospital
-                    st.session_state.patient_name = patient
-                    st.session_state.patient_email = patient_email
-                    st.session_state.patient_address = patient_address
-                    st.rerun()
-                else:
-                    st.error("❌ Please enter valid Doctor ID and fill all required fields.")
-        
-        st.info("💡 Use a valid Doctor ID")
-    
+    # symptoms widgets always shown here when user is not yet authenticated
+    common_symptoms = [
+        "Headache","Seizures","Nausea/Vomiting","Weakness/Paralysis",
+        "Vision changes","Speech difficulty","Balance/coordination issues",
+        "Memory loss","Personality change","Dizziness"
+    ]
+
+    # use explicit keys to persist across reruns
+    selected = st.multiselect("Select symptoms (choose multiple)", common_symptoms, key="symp_selected")
+    other_symptoms = st.text_area("Other symptoms (one per line)", key="symp_other")
+
+    # combine and save once (keeps value even after rerun)
+    symptoms_list = selected + [s.strip() for s in other_symptoms.splitlines() if s.strip()]
+    st.session_state.patient_symptoms = "; ".join(symptoms_list) if symptoms_list else ""
+
+    st.markdown("---")
+    st.title("🔐 Doctor Authentication")
+    # auth form below symptoms
+    with st.form("auth_form"):
+        doctor_id = st.text_input("Doctor ID *", placeholder="(use doctorxyz)")
+        dr_name = st.text_input("Doctor Name *", placeholder="Dr. Name")
+        hospital = st.text_input("Hospital Name *", placeholder="City General Hospital")
+        patient = st.text_input("Patient Name *", placeholder="Patient Name")
+        patient_email = st.text_input("Patient Email *", placeholder="patient@example.com")
+        patient_address = st.text_area("Patient Address *", placeholder="Enter patient address")
+        submit_btn = st.form_submit_button("🔓 Authenticate & Continue", type="primary")
+
+        if submit_btn:
+            if doctor_id == "doctorxyz" and dr_name and hospital and patient and patient_email and patient_address:
+                st.session_state.authenticated = True
+                st.session_state.dr_name = dr_name
+                st.session_state.hospital_name = hospital
+                st.session_state.patient_name = patient
+                st.session_state.patient_email = patient_email
+                st.session_state.patient_address = patient_address
+                # keep patient_symptoms as already set by widgets above
+                st.rerun()
+            else:
+                st.error("❌ Please enter valid Doctor ID and fill all required fields.")
+
+    st.info("💡 Fill symptoms first, then authenticate")
+
+if not st.session_state.authenticated:
     st.warning("👈 Please authenticate using the sidebar to access MRI analysis features.")
     st.stop()
 
@@ -163,25 +172,14 @@ with st.sidebar:
     st.subheader("📋 Session Details")
     st.write(f"**Doctor:** {st.session_state.dr_name}")
     st.write(f"**Hospital:** {st.session_state.hospital_name}")
-    st.markdown("#### 🩺 Reported Symptoms")
-    common_symptoms = [
-        "Headache", "Seizures", "Nausea/Vomiting", "Weakness/Paralysis",
-        "Vision changes", "Speech difficulty", "Balance/coordination issues",
-        "Memory loss", "Personality change", "Dizziness"
-    ]
-    selected = st.multiselect("Select symptoms (choose multiple)", common_symptoms)
-    other_symptoms = st.text_area("Other symptoms (type one per line)", placeholder="Describe any other symptoms here")
-    
-    # Combine and store
-    symptoms_list = selected + [s.strip() for s in other_symptoms.splitlines() if s.strip()]
-    symptoms_text = "; ".join(symptoms_list) if symptoms_list else "Not provided"
-    st.session_state.patient_symptoms = symptoms_text
-    
+
+    # show symptoms as text (do not prompt again)
+    st.write(f"**Reported Symptoms:** {st.session_state.patient_symptoms or 'Not provided'}")
+
     st.write(f"**Patient:** {st.session_state.patient_name}")
     st.write(f"**Email:** {st.session_state.patient_email}")
     st.write(f"**Address:** {st.session_state.patient_address}")
-    
-    
+
     st.markdown("---")
     if st.button("🚪 Logout", type="secondary"):
         for key in list(st.session_state.keys()):
@@ -616,4 +614,3 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
-
