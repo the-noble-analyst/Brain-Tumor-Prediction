@@ -335,8 +335,7 @@ def generate_pdf_report(image, label, conf_pct, dr_name, hospital_name,
     y -= 24
     c.setFillColorRGB(0, 0, 0)
     
-    summary_paragraphs = [p.strip() for p in ai_summary.split('
-') if p.strip()]
+    summary_paragraphs = [p.strip() for p in ai_summary.split('') if p.strip()]
     
     for paragraph in summary_paragraphs:
         if y < 80:
@@ -616,4 +615,5 @@ EfficientNet-B0 + Grad-CAM + Gemini AI + Multi-Page PDF Export<br>
 Developed with ❤️ using Streamlit
 </div>
 """, unsafe_allow_html=True)
+
 
